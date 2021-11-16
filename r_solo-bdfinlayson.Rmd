@@ -1,0 +1,42 @@
+---
+title: "r_solo-bdfinlayson"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(readr)
+library(dplyr)
+```
+
+## 1
+
+```{r}
+
+districts <- read_csv('./data/districts.csv')
+
+str(districts)
+```
+
+There are 146 rows and 27 columns.
+
+
+## 2
+
+```{r}
+
+districts <- districts[-1,]
+
+districts %>% head()
+```
+
+## 3
+
+```{r}
+
+districts %>%
+  filter(alg_1 >= 80 & eng_1 >= 80) %>% 
+  str()
+```
+There 13 districts with a proficiency rate of at least 80%
