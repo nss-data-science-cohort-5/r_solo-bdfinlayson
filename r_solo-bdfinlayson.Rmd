@@ -8,6 +8,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(readr)
 library(dplyr)
+library(stringr)
 ```
 
 ## 1
@@ -16,10 +17,15 @@ library(dplyr)
 
 districts <- read_csv('./data/districts.csv')
 
-str(districts)
-```
+nrows <- districts %>% 
+  count()
 
-There are 146 rows and 27 columns.
+ncols <- districts %>% 
+  ncol()
+
+str_interp("There are ${nrows} rows and ${ncols} columns")
+
+```
 
 
 ## 2
@@ -35,8 +41,29 @@ districts %>% head()
 
 ```{r}
 
-districts %>%
+ndistricts_proficiency_80 <- districts %>%
   filter(alg_1 >= 80 & eng_1 >= 80) %>% 
-  str()
+  summarize(n_distinct(system))
+
+str_interp("There are ${ndistricts_proficiency_80} districts with alg and eng proficiency greater than 80%")
 ```
-There 13 districts with a proficiency rate of at least 80%
+
+## 4
+```{r}
+ndistricts_proficiency_50 <- districts %>% 
+  filter(alg_1 < 50 | eng_1 < 50) %>% 
+  summarise(n_distinct(system))
+
+str_interp("There are ${ndistricts_proficiency_50} districts with alg and eng proficiency less than 50%")
+```
+
+## 5
+```{r}
+lowest_grad_rate_district <- districts %>% 
+  arrange(asc(grad)) %>% 
+  top_n(1)
+
+str_interp("There ${lowest_grad_rate_district} had the lowest graduation rate")
+```
+
+
