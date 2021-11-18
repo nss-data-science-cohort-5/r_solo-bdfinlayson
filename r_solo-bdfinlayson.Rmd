@@ -9,9 +9,10 @@ knitr::opts_chunk$set(echo = TRUE)
 library(readr)
 library(dplyr)
 library(stringr)
+library(ggplot2)
 ```
 
-## 1
+## 1. Read in `districts.csv` into a tibble named `districts`. How many rows and columns does it contain?
 
 ```{r}
 
@@ -28,7 +29,7 @@ str_interp("There are ${nrows} rows and ${ncols} columns")
 ```
 
 
-## 2
+## 2. Notice that the first row corresponds to the whole State of Tennessee. Remove this row and save the result back to `districts`.
 
 ```{r}
 
@@ -37,7 +38,7 @@ districts <- districts[-1,]
 districts %>% head()
 ```
 
-## 3
+## 3. How many districts have a proficiency rate of at least 80% for both alg_1 and eng_1?
 
 ```{r}
 
@@ -48,7 +49,8 @@ ndistricts_proficiency_80 <- districts %>%
 str_interp("There are ${ndistricts_proficiency_80} districts with alg and eng proficiency greater than 80%")
 ```
 
-## 4
+## 4. How many districts have a proviciency rate less than 50% for either alg_1 or eng_1?
+
 ```{r}
 ndistricts_proficiency_50 <- districts %>% 
   filter(alg_1 < 50 | eng_1 < 50) %>% 
@@ -57,13 +59,118 @@ ndistricts_proficiency_50 <- districts %>%
 str_interp("There are ${ndistricts_proficiency_50} districts with alg and eng proficiency less than 50%")
 ```
 
-## 5
+## 5. Which district has the lowest graduation rate?
+
 ```{r}
 lowest_grad_rate_district <- districts %>% 
-  arrange(asc(grad)) %>% 
-  top_n(1)
+  arrange(grad) %>% 
+  slice_head()
 
-str_interp("There ${lowest_grad_rate_district} had the lowest graduation rate")
+system_name <- lowest_grad_rate_district %>% select(system_name)
+grad <- lowest_grad_rate_district %>% select(grad)
+
+str_interp("The ${system_name} had the lowest graduation rate at ${grad}%.")
+```
+
+## 6. Which district has the highest dropout rate?
+
+```{r}
+
+highest_dropout <- districts %>% 
+  arrange(desc(dropout)) %>% 
+  slice_head()
+
+system_name <- highest_dropout %>% 
+  select(system_name)
+
+dropout <- highest_dropout %>% 
+  select(dropout)
+
+str_interp("The ${system_name} had the highest dropout rate of ${dropout}%.")
+
+```
+
+## 7. Within the Mid Cumberland region, which district has the highest ACT composite?
+
+```{r}
+
+highest_act <- districts %>% 
+  filter(region == "Mid Cumberland") %>% 
+  arrange(desc(act_composite)) %>% 
+  slice_head()
+
+system_name <- highest_act %>% 
+  select(system_name)
+
+act <- highest_act %>% 
+  select(act_composite)
+
+str_interp("The ${system_name} had the highest act composite of ${act}%.")
+
 ```
 
 
+## 8. Create a histogram showing the distribution of graduation rates. What can you say about this distribution?
+
+```{r}
+
+districts %>% 
+  ggplot(aes(x = grad)) + 
+  geom_histogram()
+
+```
+
+#### The majority of districts have graduation rates above 90%, there are several outliers with graduation rates below 75%.
+
+##  9. Create a scatter plot to compare alg_1 proficiency rates to alg_2 rates. What do you notice? Facet this plot by region. Does anything stand out when you facet the plots?
+
+```{r}
+
+districts %>% 
+  ggplot(aes(x = alg_1, y = alg_2, color = region)) + 
+  geom_point() +
+  geom_smooth(method = lm) +
+  facet_wrap(~ region)
+
+```
+
+#### Upper cumberland increases in alg_1 scores do not show a corresponding increase in alg_2 scores. Southwest/Memphis had the largest spread in scores.
+
+
+## 10. Create a bar chart showing the total enrollment by region. Which region has the highest total enrollment? Which has the smallest?
+
+```{r}
+
+districts %>% 
+  group_by(region) %>% 
+  ggplot(aes(x = reorder(region, enrollment, FUN=sum), y = enrollment, fill = region)) +
+  geom_col() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+  
+```
+
+## 11. When creating this bar chart you may have noticed that some districts have missing enrollment values. For how many districts is this the case?
+
+```{r}
+
+districts %>% 
+  filter(is.na(enrollment)) %>% 
+  count()
+
+```
+
+##  12. What is the mean graduation rate across all districts? What might be wrong with using just the regular mean to assess average graduation rates?
+
+```{r}
+
+districts %>% 
+  summarise(mean_grad = mean(grad, na.rm = TRUE))
+```
+
+
+## 13. Redo the previous question but use a weighted average (`weighted.mean`) graduation across all districts, weighing by enrollment. How much does this change your answer? Can you explain using the data the reason for the big change from using the mean?
+
+```{r}
+districts %>% 
+  summarise(mean_grad = weighted.mean(grad, enrollment, na.rm = TRUE))
+```
