@@ -174,3 +174,119 @@ districts %>%
 districts %>% 
   summarise(mean_grad = weighted.mean(grad, enrollment, na.rm = TRUE))
 ```
+
+## 14. Create a boxplot showing enrollment rates per region. Does anything stand out?
+
+```{r}
+
+districts %>% 
+  group_by(region) %>% 
+  ggplot(aes(color=region, x=region, y=enrollment)) +
+  geom_boxplot(outlier.shape=NA) +
+  scale_y_continuous(limits = c(0, 45000)) +
+  theme(axis.text.x = element_text(angle = 90, hjust=1, vjust=0.5))
+```
+There are some major metropolitan areas (Memphis, Nashville, etc) that are outliers with tens of thousands of students, while most TN districts have ~2500-5000 students. The boxplot above hides these outliers to improve readability.
+
+## 15. Create a boxplot showing graduation rates per region. Does anything stand out?
+
+```{r}
+districts %>% 
+  group_by(region) %>% 
+  ggplot(aes(color=region, x=region, y=grad)) +
+  geom_boxplot() + 
+  theme(axis.text.x = element_text(angle = 90, hjust=1, vjust=0.5))
+```
+The median graduation rate seems to be between 85-95% for most districts, but there are some troubling outliers in some regions (Mid Cumberland, Southwest/Memphis, Northwest) where graduation rates are below 75%, sometimes well below.
+
+
+## 16. Find the weighted average of graduation rates by region using enrollment as weights. Compare the results you get for the weighted average to what you see from the boxplots. Can you explain any discrepancy?
+
+```{r}
+districts %>% 
+  group_by(region) %>%
+  filter(!is.na(enrollment), !is.na(grad)) %>% 
+  summarize(weighted_graduation_mean = weighted.mean(grad, enrollment)) %>% 
+  arrange(desc(weighted_graduation_mean))
+```
+
+To me the results seem to be mostly align with the box plots.
+
+## 17. For many districts, values for `alg_2` are lower than for `alg_1`. 
+
+### 17a. Create a histogram showing the distribution of differences (`alg_1` - `alg_2`). 
+
+```{r}
+districts %>% 
+  mutate(alg_diff=alg_1 - alg_2) %>% 
+  group_by(region) %>% 
+  ggplot(aes(color=region, x=alg_diff)) +
+  geom_histogram()
+```
+
+### 17b. Which school had the largest drop from `alg_1` to `alg_2`? 
+
+```{r}
+districts %>% 
+  mutate(alg_diff=alg_1 - alg_2) %>% 
+  slice_max(n=5, order_by=alg_diff)
+```
+
+### 17c. For what percentage of schools is it true that `alg_2` is larger than `alg_1`? 
+
+```{r}
+districts %>%
+  mutate(is_alg_2_larger=alg_2 > alg_1) %>% 
+  count(is_alg_2_larger) %>% 
+  filter(is_alg_2_larger == TRUE) %>% 
+  pull(n) / count(districts %>% filter(!is.na(alg_1), !is.na(alg_2))) * 100
+```
+
+### 17d. Is there a similar dropoff for `eng_2` and `eng_3`?
+
+```{r}
+districts %>%
+  mutate(is_eng_3_larger=eng_3 > eng_2) %>% 
+  count(is_eng_3_larger) %>% 
+  filter(is_eng_3_larger == TRUE) %>% 
+  pull(n) / count(districts %>% filter(!is.na(eng_2), !is.na(eng_3))) * 100
+
+```
+Less than 1% of schools had higher eng_3 vs eng_2 rates, whereas over 12% of schools had higher alg_2 vs alg_1 rates.
+
+
+## 18. You may have noticed that a lot of rows are missing values. Which district has the largest number of missing values? What do you notice about schools that have a lot of missing values?
+
+```{r}
+districts %>% 
+  mutate(na_count = rowSums(is.na(.))) %>% 
+  slice_max(n=5, order_by=na_count) %>% 
+  group_by(region) %>% 
+  ggplot(aes(fill=region, color=region, x=region, y=enrollment)) +
+  geom_col() +
+  theme(axis.text.x = element_text(angle = 90, hjust=1, vjust=0.5))
+```
+Mid Cumberland region schools have the highest number of missing values.
+
+## 19. Find the correlation between graduation rate and all other variables. Create a horizontal bar chart showing these correlations. Make sure that your plot is ordered by correlation values. What do you notice from these correlations?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
