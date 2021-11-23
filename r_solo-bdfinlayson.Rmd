@@ -10,6 +10,7 @@ library(readr)
 library(dplyr)
 library(stringr)
 library(ggplot2)
+library(corrr)
 ```
 
 ## 1. Read in `districts.csv` into a tibble named `districts`. How many rows and columns does it contain?
@@ -270,7 +271,29 @@ Mid Cumberland region schools have the highest number of missing values.
 
 ## 19. Find the correlation between graduation rate and all other variables. Create a horizontal bar chart showing these correlations. Make sure that your plot is ordered by correlation values. What do you notice from these correlations?
 
+```{r}
+districts %>% 
+  select(where(is.numeric)) %>% 
+  correlate() %>% 
+  focus(grad) %>% 
+  arrange(desc(grad)) %>% 
+  ggplot(aes(fill=term, color=term, y=grad, x=term)) + 
+  geom_col() +
+  theme(axis.text.x = element_text(angle = 90, hjust=1, vjust=0.5))
 
+```
+Graduation rates seem negatively correlated with bad student behavior or performance, such as chronic absence. Race also appears to be a factor (black and hispanic students have negative correlations).
+
+
+## 20. Create a scatterplot for `grad` vs. `suspended`. Does what you see make sense given your answer from the previous part?
+
+```{r}
+
+districts %>% 
+  ggplot(aes(x=grad, y=suspended)) +
+  geom_point()
+
+```
 
 
 
